@@ -80,6 +80,27 @@ export default function WorkspaceDetailPage() {
           <RoleBadge role={role} />
         </div>
 
+        {/* Projects shortcut */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Projects
+            </h2>
+            <button
+              onClick={() => navigate(`/workspaces/${workspaceId}/projects`)}
+              className="text-xs text-indigo-400 hover:text-indigo-300 transition"
+            >
+              View all →
+            </button>
+          </div>
+          <div
+            onClick={() => navigate(`/workspaces/${workspaceId}/projects`)}
+            className="bg-gray-900 border border-gray-800 rounded-xl px-5 py-4 cursor-pointer hover:border-indigo-500/40 transition text-sm text-gray-400 hover:text-white"
+          >
+            Browse and manage projects in this workspace →
+          </div>
+        </section>
+
         {/* Members */}
         <section>
           <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">

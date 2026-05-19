@@ -9,6 +9,7 @@ import {
   updateWorkspace,
   deleteWorkspace,
 } from '../controllers/workspaceController.js';
+import projectsRouter from './projects.js';
 
 const router = Router();
 
@@ -35,5 +36,8 @@ router.delete(
   requireRole(ROLES.OWNER),
   deleteWorkspace
 );
+
+// Nested: /api/workspaces/:workspaceId/projects
+router.use('/:workspaceId/projects', projectsRouter);
 
 export default router;
