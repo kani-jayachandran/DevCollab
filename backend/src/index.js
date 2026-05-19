@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import healthRouter from './routes/health.js';
 import authRouter from './routes/auth.js';
+import workspacesRouter from './routes/workspaces.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/workspaces', workspacesRouter);
 
 // Connect to MongoDB then start server
 connectDB().then(() => {
