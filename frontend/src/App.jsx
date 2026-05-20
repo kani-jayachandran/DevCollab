@@ -7,6 +7,8 @@ import RegisterPage from './pages/RegisterPage.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import WorkspacesPage from './pages/WorkspacesPage.jsx';
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage.jsx';
+import ProjectsPage from './pages/ProjectsPage.jsx';
+import ProjectDetailPage from './pages/ProjectDetailPage.jsx';
 
 export default function App() {
   return (
@@ -18,7 +20,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
-            {/* Protected */}
+            {/* Protected — profile */}
             <Route
               path="/dashboard"
               element={
@@ -27,6 +29,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Protected — workspaces */}
             <Route
               path="/workspaces"
               element={
@@ -40,6 +44,24 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <WorkspaceDetailPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Protected — projects (nested under workspace) */}
+            <Route
+              path="/workspaces/:workspaceId/projects"
+              element={
+                <ProtectedRoute>
+                  <ProjectsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/workspaces/:workspaceId/projects/:projectId"
+              element={
+                <ProtectedRoute>
+                  <ProjectDetailPage />
                 </ProtectedRoute>
               }
             />
