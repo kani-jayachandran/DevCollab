@@ -8,7 +8,7 @@ import DashboardPage from './pages/DashboardPage.jsx';
 import WorkspacesPage from './pages/WorkspacesPage.jsx';
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage.jsx';
 import ProjectsPage from './pages/ProjectsPage.jsx';
-import ProjectDetailPage from './pages/ProjectDetailPage.jsx';
+import KanbanPage from './pages/KanbanPage.jsx';
 
 export default function App() {
   return (
@@ -48,7 +48,7 @@ export default function App() {
               }
             />
 
-            {/* Protected — projects (nested under workspace) */}
+            {/* Protected — projects */}
             <Route
               path="/workspaces/:workspaceId/projects"
               element={
@@ -57,11 +57,13 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Protected — Kanban board (project detail) */}
             <Route
               path="/workspaces/:workspaceId/projects/:projectId"
               element={
                 <ProtectedRoute>
-                  <ProjectDetailPage />
+                  <KanbanPage />
                 </ProtectedRoute>
               }
             />

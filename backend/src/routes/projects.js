@@ -9,6 +9,7 @@ import {
   updateProject,
   deleteProject,
 } from '../controllers/projectController.js';
+import tasksRouter from './tasks.js';
 
 /**
  * All project routes are nested under /api/workspaces/:workspaceId/projects.
@@ -28,5 +29,8 @@ router.post('/', requireRole(ROLES.OWNER, ROLES.ADMIN, ROLES.MEMBER), createProj
 router.get('/:projectId', getProject);
 router.patch('/:projectId', requireRole(ROLES.OWNER, ROLES.ADMIN), updateProject);
 router.delete('/:projectId', requireRole(ROLES.OWNER), deleteProject);
+
+// Nested: /api/workspaces/:workspaceId/projects/:projectId/tasks
+router.use('/:projectId/tasks', tasksRouter);
 
 export default router;
