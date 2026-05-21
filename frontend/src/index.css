@@ -1,3 +1,66 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── TipTap editor prose styles ─────────────────────────────────────────── */
+.tiptap-editor {
+  @apply text-gray-100 text-sm leading-relaxed outline-none min-h-[400px];
+}
+
+.tiptap-editor p { @apply mb-3; }
+.tiptap-editor p:last-child { @apply mb-0; }
+
+.tiptap-editor h1 { @apply text-2xl font-bold mb-4 mt-6 text-white; }
+.tiptap-editor h2 { @apply text-xl  font-bold mb-3 mt-5 text-white; }
+.tiptap-editor h3 { @apply text-lg  font-semibold mb-2 mt-4 text-white; }
+
+.tiptap-editor strong { @apply font-semibold text-white; }
+.tiptap-editor em     { @apply italic; }
+.tiptap-editor u      { @apply underline; }
+.tiptap-editor s      { @apply line-through; }
+
+.tiptap-editor ul { @apply list-disc   pl-6 mb-3 space-y-1; }
+.tiptap-editor ol { @apply list-decimal pl-6 mb-3 space-y-1; }
+
+.tiptap-editor blockquote {
+  @apply border-l-4 border-indigo-500 pl-4 italic text-gray-400 my-4;
+}
+
+.tiptap-editor code {
+  @apply bg-gray-800 text-indigo-300 px-1.5 py-0.5 rounded text-xs font-mono;
+}
+
+.tiptap-editor pre {
+  @apply bg-gray-800 rounded-lg p-4 my-4 overflow-x-auto;
+}
+.tiptap-editor pre code {
+  @apply bg-transparent p-0 text-sm text-gray-200;
+}
+
+.tiptap-editor hr { @apply border-gray-700 my-6; }
+
+.tiptap-editor a {
+  @apply text-indigo-400 underline hover:text-indigo-300 transition-colors;
+}
+
+/* Task list checkboxes */
+.tiptap-editor ul[data-type="taskList"] { @apply list-none pl-0; }
+.tiptap-editor ul[data-type="taskList"] li {
+  @apply flex items-start gap-2 mb-1;
+}
+.tiptap-editor ul[data-type="taskList"] li > label {
+  @apply flex items-center mt-0.5;
+}
+.tiptap-editor ul[data-type="taskList"] li > label input[type="checkbox"] {
+  @apply w-4 h-4 rounded accent-indigo-500 cursor-pointer;
+}
+.tiptap-editor ul[data-type="taskList"] li > div { @apply flex-1; }
+.tiptap-editor ul[data-type="taskList"] li[data-checked="true"] > div {
+  @apply line-through text-gray-500;
+}
+
+/* Placeholder */
+.tiptap-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply text-gray-600 pointer-events-none float-left h-0;
+}

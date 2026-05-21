@@ -9,6 +9,8 @@ import WorkspacesPage from './pages/WorkspacesPage.jsx';
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage.jsx';
 import ProjectsPage from './pages/ProjectsPage.jsx';
 import KanbanPage from './pages/KanbanPage.jsx';
+import DocsPage from './pages/DocsPage.jsx';
+import DocEditorPage from './pages/DocEditorPage.jsx';
 
 export default function App() {
   return (
@@ -21,52 +23,21 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Protected — profile */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
             {/* Protected — workspaces */}
-            <Route
-              path="/workspaces"
-              element={
-                <ProtectedRoute>
-                  <WorkspacesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/workspaces/:workspaceId"
-              element={
-                <ProtectedRoute>
-                  <WorkspaceDetailPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/workspaces" element={<ProtectedRoute><WorkspacesPage /></ProtectedRoute>} />
+            <Route path="/workspaces/:workspaceId" element={<ProtectedRoute><WorkspaceDetailPage /></ProtectedRoute>} />
 
             {/* Protected — projects */}
-            <Route
-              path="/workspaces/:workspaceId/projects"
-              element={
-                <ProtectedRoute>
-                  <ProjectsPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/workspaces/:workspaceId/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
 
-            {/* Protected — Kanban board (project detail) */}
-            <Route
-              path="/workspaces/:workspaceId/projects/:projectId"
-              element={
-                <ProtectedRoute>
-                  <KanbanPage />
-                </ProtectedRoute>
-              }
-            />
+            {/* Protected — Kanban board */}
+            <Route path="/workspaces/:workspaceId/projects/:projectId" element={<ProtectedRoute><KanbanPage /></ProtectedRoute>} />
+
+            {/* Protected — Docs wiki */}
+            <Route path="/workspaces/:workspaceId/projects/:projectId/docs" element={<ProtectedRoute><DocsPage /></ProtectedRoute>} />
+            <Route path="/workspaces/:workspaceId/projects/:projectId/docs/:docId" element={<ProtectedRoute><DocEditorPage /></ProtectedRoute>} />
 
             {/* Default */}
             <Route path="*" element={<Navigate to="/workspaces" replace />} />
