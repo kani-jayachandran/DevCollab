@@ -11,6 +11,7 @@ import ProjectsPage from './pages/ProjectsPage.jsx';
 import KanbanPage from './pages/KanbanPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
 import DocEditorPage from './pages/DocEditorPage.jsx';
+import SnippetsPage from './pages/SnippetsPage.jsx';
 
 export default function App() {
   return (
@@ -38,6 +39,9 @@ export default function App() {
             {/* Protected — Docs wiki */}
             <Route path="/workspaces/:workspaceId/projects/:projectId/docs" element={<ProtectedRoute><DocsPage /></ProtectedRoute>} />
             <Route path="/workspaces/:workspaceId/projects/:projectId/docs/:docId" element={<ProtectedRoute><DocEditorPage /></ProtectedRoute>} />
+
+            {/* Protected — Snippets */}
+            <Route path="/workspaces/:workspaceId/projects/:projectId/snippets" element={<ProtectedRoute><SnippetsPage /></ProtectedRoute>} />
 
             {/* Default */}
             <Route path="*" element={<Navigate to="/workspaces" replace />} />

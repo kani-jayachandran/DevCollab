@@ -11,6 +11,7 @@ import {
 } from '../controllers/projectController.js';
 import tasksRouter from './tasks.js';
 import docsRouter from './docs.js';
+import snippetsRouter from './snippets.js';
 
 /**
  * All project routes are nested under /api/workspaces/:workspaceId/projects.
@@ -36,5 +37,8 @@ router.use('/:projectId/tasks', tasksRouter);
 
 // Nested: /api/workspaces/:workspaceId/projects/:projectId/docs
 router.use('/:projectId/docs', docsRouter);
+
+// Nested: /api/workspaces/:workspaceId/projects/:projectId/snippets
+router.use('/:projectId/snippets', snippetsRouter);
 
 export default router;

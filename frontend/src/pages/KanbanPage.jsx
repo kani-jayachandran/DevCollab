@@ -164,6 +164,13 @@ function KanbanBoard({ workspace, project, role }) {
               >
                 📄 Docs
               </button>
+              {/* Snippets link */}
+              <button
+                onClick={() => navigate(`/workspaces/${workspaceId}/projects/${project._id}/snippets`)}
+                className="text-sm text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 px-3 py-1.5 rounded-lg transition"
+              >
+                🧩 Snippets
+              </button>
               <button
                 onClick={() => openCreate('Todo')}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
