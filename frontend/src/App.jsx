@@ -12,6 +12,7 @@ import KanbanPage from './pages/KanbanPage.jsx';
 import DocsPage from './pages/DocsPage.jsx';
 import DocEditorPage from './pages/DocEditorPage.jsx';
 import SnippetsPage from './pages/SnippetsPage.jsx';
+import AIAssistantPage from './pages/AIAssistantPage.jsx';
 
 export default function App() {
   return (
@@ -42,6 +43,9 @@ export default function App() {
 
             {/* Protected — Snippets */}
             <Route path="/workspaces/:workspaceId/projects/:projectId/snippets" element={<ProtectedRoute><SnippetsPage /></ProtectedRoute>} />
+
+            {/* Protected — AI Assistant */}
+            <Route path="/workspaces/:workspaceId/projects/:projectId/ai" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
 
             {/* Default */}
             <Route path="*" element={<Navigate to="/workspaces" replace />} />

@@ -12,6 +12,7 @@ import {
 import tasksRouter from './tasks.js';
 import docsRouter from './docs.js';
 import snippetsRouter from './snippets.js';
+import aiRouter from './ai.js';
 
 /**
  * All project routes are nested under /api/workspaces/:workspaceId/projects.
@@ -40,5 +41,8 @@ router.use('/:projectId/docs', docsRouter);
 
 // Nested: /api/workspaces/:workspaceId/projects/:projectId/snippets
 router.use('/:projectId/snippets', snippetsRouter);
+
+// Nested: /api/workspaces/:workspaceId/projects/:projectId/ai
+router.use('/:projectId/ai', aiRouter);
 
 export default router;

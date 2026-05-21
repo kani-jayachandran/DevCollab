@@ -171,6 +171,13 @@ function KanbanBoard({ workspace, project, role }) {
               >
                 🧩 Snippets
               </button>
+              {/* AI Assistant link */}
+              <button
+                onClick={() => navigate(`/workspaces/${workspaceId}/projects/${project._id}/ai`)}
+                className="text-sm text-gray-400 hover:text-white border border-indigo-700/50 hover:border-indigo-500 bg-indigo-500/5 hover:bg-indigo-500/10 px-3 py-1.5 rounded-lg transition"
+              >
+                🤖 AI
+              </button>
               <button
                 onClick={() => openCreate('Todo')}
                 className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
