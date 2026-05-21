@@ -1,3 +1,5 @@
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import TaskCard from './TaskCard.jsx';
 import { STATUS_LABELS } from '../context/TaskContext.jsx';
 
@@ -22,9 +24,25 @@ const COLUMN_COUNT_BG = {
   Done:       'bg-green-500/20 text-green-300',
 };
 
+const COLUMN_DROP_BG = {
+  Todo:       'bg-gray-800/40',
+  InProgress: 'bg-blue-900/20',
+  InReview:   'bg-yellow-900/20',
+  Done:       'bg-green-900/20',
+};
+
 export default function KanbanColumn({ status, tasks, onAddTask, onEditTask }) {
+  const { setNodeRef, isOver } = useDroppable({ id: status });
+
+  const taskIds = tasks.map((t) => t._id);
+
   return (
-    <div className={`flex flex-col bg-gray-950 border ${COLUMN_ACCENT[status]} rounded-xl min-w-[260px] w-[260px] shrink-0`}>
+    <div
+      className={`flex flex-col border rounded-xl min-w-[260px] w-[260px] shrink-0 transition-colors duration-150
+        ${COLUMN_ACCENT[status]}
+        ${isOver ? COLUMN_DROP_BG[status] : 'bg-gray-950'}
+      `}
+    >
       {/* Column header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
         <div className="flex items-center gap-2">
@@ -45,19 +63,32 @@ export default function KanbanColumn({ status, tasks, onAddTask, onEditTask }) {
         </button>
       </div>
 
-      {/* Task list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 min-h-[120px]">
-        {tasks.length === 0 && (
-          <div className="flex items-center justify-center h-20 text-xs text-gray-700 select-none">
-            No tasks
+      {/* Droppable + sortable task list */}
+      <div
+        ref={setNodeRef}
+        className="flex-1 overflow-y-auto p-3 min-h-[120px]"
+      >
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2.5">
+            {tasks.length === 0 && (
+              <div className={`flex items-center justify-center h-20 text-xs select-none rounded-lg transition-colors
+                ${isOver ? 'text-gray-500 border border-dashed border-gray-600' : 'text-gray-700'}
+              `}>
+                {isOver ? 'Drop here' : 'No tasks'}
+              </div>
+            )}
+            {tasks.map((task) => (
+              <TaskCard
+                key={task._id}
+                task={task}
+                onEdit={onEditTask}
+              />
+            ))}
           </div>
-        )}
-        {tasks.map((task) => (
-          <TaskCard key={task._id} task={task} onEdit={onEditTask} />
-        ))}
+        </SortableContext>
       </div>
 
-      {/* Add task shortcut at bottom */}
+      {/* Add task shortcut */}
       <button
         onClick={() => onAddTask(status)}
         className="mx-3 mb-3 mt-1 py-2 rounded-lg border border-dashed border-gray-800 text-xs text-gray-600 hover:text-gray-400 hover:border-gray-600 transition"

@@ -1,7 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
+
 import AppShell from '../components/AppShell.jsx';
 import KanbanColumn from '../components/KanbanColumn.jsx';
+import TaskCard from '../components/TaskCard.jsx';
 import TaskModal from '../components/TaskModal.jsx';
 import RoleBadge from '../components/RoleBadge.jsx';
 import { TaskProvider, useTask, TASK_STATUSES } from '../context/TaskContext.jsx';
@@ -12,14 +23,97 @@ import { fetchProject } from '../api/projectApi.js';
 function KanbanBoard({ workspace, project, role }) {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
-  const { loading, error, loadTasks, getColumns } = useTask();
+  const { tasks, loading, error, loadTasks, getColumns, moveTask } = useTask();
 
-  // Modal state: null = closed, { status } = create, { task } = edit
-  const [modal, setModal] = useState(null);
+  const [modal, setModal]           = useState(null);   // null | { status } | { task }
+  const [activeTask, setActiveTask] = useState(null);   // task being dragged (for DragOverlay)
 
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
+
+  // ── Sensors ────────────────────────────────────────────────────────────────
+  // Require 8px movement before a drag starts — prevents accidental drags on click
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
+
+  // ── Drag handlers ──────────────────────────────────────────────────────────
+  const handleDragStart = useCallback(({ active }) => {
+    const task = tasks.find((t) => t._id === active.id);
+    setActiveTask(task ?? null);
+  }, [tasks]);
+
+  const handleDragOver = useCallback(({ active, over }) => {
+    if (!over) return;
+
+    const activeId  = active.id;
+    const overId    = over.id;
+
+    if (activeId === overId) return;
+
+    const activeTask = tasks.find((t) => t._id === activeId);
+    if (!activeTask) return;
+
+    // overId is either a column status string or another task's _id
+    const overIsColumn = TASK_STATUSES.includes(overId);
+    const destStatus   = overIsColumn
+      ? overId
+      : tasks.find((t) => t._id === overId)?.status;
+
+    if (!destStatus || destStatus === activeTask.status) return;
+
+    // Optimistically move to the new column (order will be finalised in dragEnd)
+    moveTask(activeId, destStatus, activeTask.order);
+  }, [tasks, moveTask]);
+
+  const handleDragEnd = useCallback(({ active, over }) => {
+    setActiveTask(null);
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId   = over.id;
+
+    const activeTaskObj = tasks.find((t) => t._id === activeId);
+    if (!activeTaskObj) return;
+
+    const overIsColumn = TASK_STATUSES.includes(overId);
+    const destStatus   = overIsColumn
+      ? overId
+      : tasks.find((t) => t._id === overId)?.status ?? activeTaskObj.status;
+
+    // Build the destination column's task list (after the status change)
+    const destTasks = tasks
+      .filter((t) => t.status === destStatus)
+      .sort((a, b) => a.order - b.order);
+
+    let newOrder;
+
+    if (overIsColumn || activeId === overId) {
+      // Dropped onto the column itself or same position — put at end
+      newOrder = destTasks.length > 0
+        ? Math.max(...destTasks.map((t) => t.order)) + 1
+        : 0;
+    } else {
+      // Dropped onto another task — insert before/after it
+      const overTask  = destTasks.find((t) => t._id === overId);
+      const overIndex = destTasks.findIndex((t) => t._id === overId);
+      const activeIndex = destTasks.findIndex((t) => t._id === activeId);
+
+      if (overTask) {
+        const reordered = arrayMove(
+          destTasks.map((t) => t._id),
+          activeIndex === -1 ? destTasks.length : activeIndex,
+          overIndex
+        );
+        newOrder = reordered.indexOf(activeId);
+      } else {
+        newOrder = destTasks.length;
+      }
+    }
+
+    moveTask(activeId, destStatus, newOrder);
+  }, [tasks, moveTask]);
 
   const columns = getColumns();
 
@@ -32,7 +126,6 @@ function KanbanBoard({ workspace, project, role }) {
       <div className="flex flex-col h-[calc(100vh-57px)]">
         {/* Page header */}
         <div className="px-6 py-4 border-b border-gray-800 shrink-0">
-          {/* Breadcrumb */}
           <nav className="text-xs text-gray-500 mb-2 flex items-center gap-1.5 flex-wrap">
             <button onClick={() => navigate('/workspaces')} className="hover:text-white transition">
               Workspaces
@@ -68,7 +161,7 @@ function KanbanBoard({ workspace, project, role }) {
           </div>
         </div>
 
-        {/* Board area */}
+        {/* Board */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden">
           {loading && (
             <div className="flex items-center justify-center h-full text-gray-500 text-sm animate-pulse">
@@ -83,22 +176,43 @@ function KanbanBoard({ workspace, project, role }) {
           )}
 
           {!loading && !error && (
-            <div className="flex gap-4 p-6 h-full items-start">
-              {TASK_STATUSES.map((status) => (
-                <KanbanColumn
-                  key={status}
-                  status={status}
-                  tasks={columns[status] ?? []}
-                  onAddTask={openCreate}
-                  onEditTask={openEdit}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <div className="flex gap-4 p-6 h-full items-start">
+                {TASK_STATUSES.map((status) => (
+                  <KanbanColumn
+                    key={status}
+                    status={status}
+                    tasks={columns[status] ?? []}
+                    onAddTask={openCreate}
+                    onEditTask={openEdit}
+                  />
+                ))}
+              </div>
+
+              {/* Floating card that follows the cursor while dragging */}
+              <DragOverlay dropAnimation={{
+                duration: 200,
+                easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+              }}>
+                {activeTask && (
+                  <TaskCard
+                    task={activeTask}
+                    onEdit={() => {}}
+                    isDragOverlay
+                  />
+                )}
+              </DragOverlay>
+            </DndContext>
           )}
         </div>
       </div>
 
-      {/* Task modal */}
       {modal && (
         <TaskModal
           task={modal.task ?? null}
