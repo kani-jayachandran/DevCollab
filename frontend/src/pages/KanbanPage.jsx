@@ -15,7 +15,9 @@ import KanbanColumn from '../components/KanbanColumn.jsx';
 import TaskCard from '../components/TaskCard.jsx';
 import TaskModal from '../components/TaskModal.jsx';
 import RoleBadge from '../components/RoleBadge.jsx';
+import PresenceBar from '../components/PresenceBar.jsx';
 import { TaskProvider, useTask, TASK_STATUSES } from '../context/TaskContext.jsx';
+import { usePresence } from '../hooks/usePresence.js';
 import { fetchWorkspace } from '../api/workspaceApi.js';
 import { fetchProject } from '../api/projectApi.js';
 
@@ -24,6 +26,7 @@ function KanbanBoard({ workspace, project, role }) {
   const { workspaceId } = useParams();
   const navigate = useNavigate();
   const { tasks, loading, error, loadTasks, getColumns, moveTask } = useTask();
+  const presenceMembers = usePresence(project._id);
 
   const [modal, setModal]           = useState(null);   // null | { status } | { task }
   const [activeTask, setActiveTask] = useState(null);   // task being dragged (for DragOverlay)
@@ -152,12 +155,15 @@ function KanbanBoard({ workspace, project, role }) {
                 </span>
               )}
             </div>
-            <button
-              onClick={() => openCreate('Todo')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
-            >
-              + New task
-            </button>
+            <div className="flex items-center gap-4">
+              <PresenceBar members={presenceMembers} />
+              <button
+                onClick={() => openCreate('Todo')}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition"
+              >
+                + New task
+              </button>
+            </div>
           </div>
         </div>
 

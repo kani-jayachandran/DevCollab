@@ -1,11 +1,11 @@
 import Task, { TASK_STATUS } from '../models/Task.js';
+import { emitToProject, EVENTS } from '../socket/socketServer.js';
 
 const POPULATE_ASSIGNEE   = { path: 'assignee',   select: 'name email avatar' };
 const POPULATE_CREATED_BY = { path: 'createdBy',  select: 'name email avatar' };
 
 /**
  * GET /api/workspaces/:workspaceId/projects/:projectId/tasks
- * Returns all tasks for the project, grouped by status.
  */
 export const getTasks = async (req, res) => {
   try {
@@ -14,12 +14,10 @@ export const getTasks = async (req, res) => {
       .populate(POPULATE_CREATED_BY)
       .sort({ order: 1, createdAt: 1 });
 
-    // Group into kanban columns
     const columns = Object.values(TASK_STATUS).reduce((acc, s) => {
       acc[s] = [];
       return acc;
     }, {});
-
     for (const task of tasks) {
       if (columns[task.status]) columns[task.status].push(task);
     }
@@ -33,7 +31,6 @@ export const getTasks = async (req, res) => {
 
 /**
  * POST /api/workspaces/:workspaceId/projects/:projectId/tasks
- * Creates a new task. Any workspace member can create.
  */
 export const createTask = async (req, res) => {
   try {
@@ -43,7 +40,6 @@ export const createTask = async (req, res) => {
       return res.status(400).json({ message: 'Task title is required' });
     }
 
-    // Place new task at the end of its column
     const lastTask = await Task.findOne({
       project: req.project._id,
       status: status || TASK_STATUS.TODO,
@@ -66,6 +62,9 @@ export const createTask = async (req, res) => {
 
     await task.populate([POPULATE_ASSIGNEE, POPULATE_CREATED_BY]);
 
+    // ── Emit to all clients viewing this project ──────────────────────────
+    emitToProject(req.project._id.toString(), EVENTS.TASK_CREATED, { task });
+
     return res.status(201).json({ task });
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -79,7 +78,6 @@ export const createTask = async (req, res) => {
 
 /**
  * GET /api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId
- * Returns a single task.
  */
 export const getTask = async (req, res) => {
   try {
@@ -91,7 +89,6 @@ export const getTask = async (req, res) => {
       .populate(POPULATE_CREATED_BY);
 
     if (!task) return res.status(404).json({ message: 'Task not found' });
-
     return res.status(200).json({ task });
   } catch (err) {
     console.error('getTask error:', err);
@@ -101,7 +98,6 @@ export const getTask = async (req, res) => {
 
 /**
  * PATCH /api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId
- * Updates any task field. Any workspace member can update.
  */
 export const updateTask = async (req, res) => {
   try {
@@ -112,6 +108,7 @@ export const updateTask = async (req, res) => {
 
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
+    const prevStatus = task.status;
     const { title, description, status, priority, assignee, dueDate, order } = req.body;
 
     if (title       !== undefined) task.title       = title.trim();
@@ -124,6 +121,21 @@ export const updateTask = async (req, res) => {
 
     await task.save();
     await task.populate([POPULATE_ASSIGNEE, POPULATE_CREATED_BY]);
+
+    // ── Emit: use task:moved when only status/order changed, task:updated otherwise
+    const isMoveOnly =
+      status !== undefined &&
+      title === undefined &&
+      description === undefined &&
+      priority === undefined &&
+      assignee === undefined &&
+      dueDate === undefined;
+
+    const event = isMoveOnly ? EVENTS.TASK_MOVED : EVENTS.TASK_UPDATED;
+    emitToProject(req.project._id.toString(), event, {
+      task,
+      prevStatus: isMoveOnly ? prevStatus : undefined,
+    });
 
     return res.status(200).json({ task });
   } catch (err) {
@@ -138,7 +150,6 @@ export const updateTask = async (req, res) => {
 
 /**
  * DELETE /api/workspaces/:workspaceId/projects/:projectId/tasks/:taskId
- * Deletes a task. Only the creator or workspace Owner/Admin can delete.
  */
 export const deleteTask = async (req, res) => {
   try {
@@ -149,14 +160,21 @@ export const deleteTask = async (req, res) => {
 
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    const isCreator = task.createdBy.toString() === req.user._id.toString();
+    const isCreator    = task.createdBy.toString() === req.user._id.toString();
     const isPrivileged = ['Owner', 'Admin'].includes(req.memberRole);
 
     if (!isCreator && !isPrivileged) {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
 
+    const taskId    = task._id.toString();
+    const projectId = req.project._id.toString();
+
     await task.deleteOne();
+
+    // ── Emit ──────────────────────────────────────────────────────────────
+    emitToProject(projectId, EVENTS.TASK_DELETED, { taskId });
+
     return res.status(200).json({ message: 'Task deleted' });
   } catch (err) {
     console.error('deleteTask error:', err);

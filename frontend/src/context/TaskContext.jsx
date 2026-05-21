@@ -1,10 +1,11 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   fetchTasks,
   createTask as apiCreate,
   updateTask as apiUpdate,
   deleteTask as apiDelete,
 } from '../api/taskApi.js';
+import { getSocket, EVENTS } from '../socket/socketClient.js';
 
 const TaskContext = createContext(null);
 
@@ -22,6 +23,7 @@ export function TaskProvider({ workspaceId, projectId, children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
+  // ── REST: initial load ────────────────────────────────────────────────────
   const loadTasks = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -35,7 +37,54 @@ export function TaskProvider({ workspaceId, projectId, children }) {
     }
   }, [workspaceId, projectId]);
 
-  // Derived — tasks grouped by status column
+  // ── Socket: join room + listen for remote changes ─────────────────────────
+  useEffect(() => {
+    const socket = getSocket();
+
+    // Ensure socket is connected with the latest token
+    socket.auth = { token: localStorage.getItem('devcollab_token') ?? '' };
+    if (!socket.connected) socket.connect();
+
+    // Join the project room
+    socket.emit('join:project', projectId);
+
+    // ── Handlers ────────────────────────────────────────────────────────────
+    const onTaskCreated = ({ task }) => {
+      setTasks((prev) => {
+        // Ignore if we already have it (our own optimistic add)
+        if (prev.some((t) => t._id === task._id)) return prev;
+        return [...prev, task];
+      });
+    };
+
+    const onTaskUpdated = ({ task }) => {
+      setTasks((prev) => prev.map((t) => (t._id === task._id ? task : t)));
+    };
+
+    // task:moved is a subset of task:updated — same handler
+    const onTaskMoved = ({ task }) => {
+      setTasks((prev) => prev.map((t) => (t._id === task._id ? task : t)));
+    };
+
+    const onTaskDeleted = ({ taskId }) => {
+      setTasks((prev) => prev.filter((t) => t._id !== taskId));
+    };
+
+    socket.on(EVENTS.TASK_CREATED, onTaskCreated);
+    socket.on(EVENTS.TASK_UPDATED, onTaskUpdated);
+    socket.on(EVENTS.TASK_MOVED,   onTaskMoved);
+    socket.on(EVENTS.TASK_DELETED, onTaskDeleted);
+
+    return () => {
+      socket.emit('leave:project', projectId);
+      socket.off(EVENTS.TASK_CREATED, onTaskCreated);
+      socket.off(EVENTS.TASK_UPDATED, onTaskUpdated);
+      socket.off(EVENTS.TASK_MOVED,   onTaskMoved);
+      socket.off(EVENTS.TASK_DELETED, onTaskDeleted);
+    };
+  }, [projectId]);
+
+  // ── Derived: tasks grouped by column ─────────────────────────────────────
   const getColumns = useCallback(() => {
     return TASK_STATUSES.reduce((acc, status) => {
       acc[status] = tasks.filter((t) => t.status === status);
@@ -43,9 +92,13 @@ export function TaskProvider({ workspaceId, projectId, children }) {
     }, {});
   }, [tasks]);
 
+  // ── Mutations ─────────────────────────────────────────────────────────────
   const addTask = useCallback(async (payload) => {
     const { data } = await apiCreate(workspaceId, projectId, payload);
-    setTasks((prev) => [...prev, data.task]);
+    // Server will emit task:created back to us — but add optimistically too
+    setTasks((prev) =>
+      prev.some((t) => t._id === data.task._id) ? prev : [...prev, data.task]
+    );
     return data.task;
   }, [workspaceId, projectId]);
 
@@ -61,20 +114,12 @@ export function TaskProvider({ workspaceId, projectId, children }) {
   }, [workspaceId, projectId]);
 
   /**
-   * moveTask — called after a drag ends.
-   * 1. Optimistically updates local state so the UI is instant.
-   * 2. Persists the new status (and order) to the backend in the background.
-   * 3. On failure, rolls back to the previous state.
-   *
-   * @param {string} taskId      - the dragged task's _id
-   * @param {string} newStatus   - destination column status
-   * @param {number} newOrder    - position index inside the destination column
+   * moveTask — optimistic update + backend persist.
+   * The server will emit task:moved to other clients.
    */
   const moveTask = useCallback(async (taskId, newStatus, newOrder) => {
-    // Snapshot for rollback
     const snapshot = tasks;
 
-    // Optimistic update
     setTasks((prev) =>
       prev.map((t) =>
         t._id === taskId ? { ...t, status: newStatus, order: newOrder } : t
@@ -87,7 +132,6 @@ export function TaskProvider({ workspaceId, projectId, children }) {
         order:  newOrder,
       });
     } catch (err) {
-      // Roll back on failure
       console.error('moveTask persist failed:', err);
       setTasks(snapshot);
     }
