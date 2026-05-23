@@ -14,3 +14,7 @@ export const generateStandup = (workspaceId, projectId) =>
 /** POST { featureDescription } → { tasks: Task[] } */
 export const generateBreakdown = (workspaceId, projectId, featureDescription) =>
   api.post(`${base(workspaceId, projectId)}/breakdown`, { featureDescription });
+
+/** POST { language, code } → { review: ReviewResult } */
+export const reviewCode = (workspaceId, projectId, language, code) =>
+  api.post(`${base(workspaceId, projectId)}/review`, { language, code });

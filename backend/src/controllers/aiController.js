@@ -4,6 +4,7 @@ import {
   projectSummaryPrompt,
   standupReportPrompt,
   taskBreakdownPrompt,
+  codeReviewPrompt,
 } from '../ai/prompts.js';
 
 // ── Shared helper: load tasks and group into columns ─────────────────────────
@@ -96,6 +97,51 @@ export const generateBreakdown = async (req, res) => {
     return res.status(200).json({ tasks: validated });
   } catch (err) {
     console.error('generateBreakdown error:', err.message);
+    const isConfig = err.message.includes('GEMINI_API_KEY');
+    return res.status(isConfig ? 503 : 500).json({ message: err.message });
+  }
+};
+
+/**
+ * POST /api/workspaces/:workspaceId/projects/:projectId/ai/review
+ * Body: { language: string, code: string }
+ * Returns structured code review feedback with a quality score.
+ */
+export const reviewCode = async (req, res) => {
+  try {
+    const { language, code } = req.body;
+
+    const SUPPORTED = ['javascript', 'python', 'java', 'cpp', 'go'];
+
+    if (!language || !SUPPORTED.includes(language)) {
+      return res.status(400).json({
+        message: `language must be one of: ${SUPPORTED.join(', ')}`,
+      });
+    }
+    if (!code || !code.trim()) {
+      return res.status(400).json({ message: 'code is required' });
+    }
+    if (code.length > 20000) {
+      return res.status(400).json({ message: 'Code must be under 20 000 characters' });
+    }
+
+    const prompt = codeReviewPrompt({ language, code: code.trim() });
+    const review = await generateJSON(prompt);
+
+    // Validate and normalise the response shape
+    const validated = {
+      score:       Math.min(10, Math.max(1, Math.round(Number(review.score) || 5))),
+      summary:     String(review.summary     ?? ''),
+      bugs:        Array.isArray(review.bugs)        ? review.bugs        : [],
+      performance: Array.isArray(review.performance) ? review.performance : [],
+      readability: Array.isArray(review.readability) ? review.readability : [],
+      security:    Array.isArray(review.security)    ? review.security    : [],
+      suggestions: Array.isArray(review.suggestions) ? review.suggestions : [],
+    };
+
+    return res.status(200).json({ review: validated });
+  } catch (err) {
+    console.error('reviewCode error:', err.message);
     const isConfig = err.message.includes('GEMINI_API_KEY');
     return res.status(isConfig ? 503 : 500).json({ message: err.message });
   }

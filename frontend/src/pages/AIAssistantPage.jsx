@@ -4,6 +4,7 @@ import AppShell from '../components/AppShell.jsx';
 import AISummaryPanel from '../components/ai/AISummaryPanel.jsx';
 import AIStandupPanel from '../components/ai/AIStandupPanel.jsx';
 import AIBreakdownPanel from '../components/ai/AIBreakdownPanel.jsx';
+import AICodeReviewPanel from '../components/ai/AICodeReviewPanel.jsx';
 import { fetchWorkspace } from '../api/workspaceApi.js';
 import { fetchProject } from '../api/projectApi.js';
 
@@ -114,9 +115,10 @@ export default function AIAssistantPage() {
 
         {/* AI panels */}
         <div className="space-y-5">
-          <AISummaryPanel   workspaceId={workspaceId} projectId={projectId} />
-          <AIStandupPanel   workspaceId={workspaceId} projectId={projectId} />
-          <AIBreakdownPanel workspaceId={workspaceId} projectId={projectId} />
+          <AISummaryPanel     workspaceId={workspaceId} projectId={projectId} />
+          <AIStandupPanel     workspaceId={workspaceId} projectId={projectId} />
+          <AIBreakdownPanel   workspaceId={workspaceId} projectId={projectId} />
+          <AICodeReviewPanel  workspaceId={workspaceId} projectId={projectId} />
         </div>
       </div>
     </AppShell>

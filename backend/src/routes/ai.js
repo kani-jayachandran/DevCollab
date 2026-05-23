@@ -6,6 +6,7 @@ import {
   generateSummary,
   generateStandup,
   generateBreakdown,
+  reviewCode,
 } from '../controllers/aiController.js';
 
 /**
@@ -22,5 +23,6 @@ router.use(loadProject);
 router.post('/summary',   generateSummary);
 router.post('/standup',   generateStandup);
 router.post('/breakdown', generateBreakdown);
+router.post('/review',    reviewCode);
 
 export default router;
