@@ -24,6 +24,11 @@ app.use('/api/health', healthRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/workspaces', workspacesRouter);
 
+// Root route — confirms the API is reachable
+app.get('/', (_req, res) => {
+  res.json({ name: 'DevCollab API', status: 'ok', docs: '/api/health' });
+});
+
 // Connect to MongoDB, then start HTTP + Socket.IO server
 connectDB().then(() => {
   initSocket(httpServer);   // attach Socket.IO to the http server
