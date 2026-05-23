@@ -20,13 +20,13 @@ function getClient() {
 }
 
 /**
- * Use "gemini-1.0-pro" — the stable model supported across all versions of
- * the @google/generative-ai SDK without requiring v1beta API access.
- * "gemini-1.5-flash" requires the v1beta endpoint on some SDK versions and
- * can return "model not found" errors; gemini-1.0-pro resolves reliably on
- * the stable v1 endpoint.
+ * Use the fully-qualified model path "models/gemini-pro".
+ * The @google/generative-ai SDK requires the "models/" prefix when calling
+ * the stable v1 API endpoint. Short names like "gemini-1.0-pro" or
+ * "gemini-1.5-flash" resolve only on v1beta and return "model not found"
+ * errors on the stable endpoint used by SDK v0.x.
  */
-const MODEL_NAME = 'gemini-1.0-pro';
+const MODEL_NAME = 'models/gemini-pro';
 
 /**
  * Sends a prompt to Gemini and returns the text response.
@@ -45,7 +45,7 @@ export async function generateText(prompt) {
     if (err.message?.includes('GEMINI_API_KEY')) throw err;
     if (err.status === 404 || err.message?.includes('404')) {
       throw new Error(
-        `Gemini model "${MODEL_NAME}" not found. Verify your GEMINI_API_KEY has access to this model.`
+        `Gemini model "${MODEL_NAME}" not found. Verify your GEMINI_API_KEY is valid and has access to the Gemini API.`
       );
     }
     if (err.status === 429 || err.message?.includes('quota')) {

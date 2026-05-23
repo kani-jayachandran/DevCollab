@@ -117,10 +117,10 @@ export const updateDoc = async (req, res) => {
       doc.version      += 1;
       doc.lastEditedBy  = req.user._id;
 
-      // Append version snapshot
+      // Append version snapshot — ensure content is always a string
       doc.history.push({
         title:   doc.title,
-        content: doc.content,
+        content: doc.content ?? '',
         savedBy: req.user._id,
         savedAt: new Date(),
         version: doc.version,

@@ -62,8 +62,15 @@ const snippetSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Text index for full-text search on title + tags
-snippetSchema.index({ title: 'text', tags: 'text' });
+// Text index for full-text search on title + tags.
+// language_override points to a non-existent field so MongoDB never
+// confuses our `language` field (e.g. "html", "javascript") with its
+// built-in per-document stemmer override, which would cause:
+//   MongoServerError: language override unsupported: html / javascript
+snippetSchema.index(
+  { title: 'text', tags: 'text' },
+  { language_override: '_textLanguage' }
+);
 // Fast lookup: all snippets in a project
 snippetSchema.index({ project: 1, createdAt: -1 });
 

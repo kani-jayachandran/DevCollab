@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 const versionSchema = new mongoose.Schema(
   {
     title:     { type: String, required: true },
-    content:   { type: String, required: true },  // HTML string from TipTap
+    content:   { type: String, default: '' },  // HTML string from TipTap
     savedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
