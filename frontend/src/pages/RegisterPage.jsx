@@ -40,8 +40,15 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-400">DevCollab</h1>
-          <p className="mt-1 text-gray-400 text-sm">Create your account</p>
+          <div className="flex items-center justify-center gap-2.5 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-indigo-900/50">
+              DC
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              DevCollab
+            </span>
+          </div>
+          <p className="text-gray-400 text-sm">Create your account</p>
         </div>
 
         <form

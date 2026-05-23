@@ -34,8 +34,15 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-400">DevCollab</h1>
-          <p className="mt-1 text-gray-400 text-sm">Sign in to your account</p>
+          <div className="flex items-center justify-center gap-2.5 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-indigo-900/50">
+              DC
+            </div>
+            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+              DevCollab
+            </span>
+          </div>
+          <p className="text-gray-400 text-sm">Sign in to your account</p>
         </div>
 
         <form
@@ -96,6 +103,13 @@ export default function LoginPage() {
               Create one
             </Link>
           </p>
+
+          {/* Demo credentials hint */}
+          <div className="bg-gray-800/60 border border-gray-700/60 rounded-lg px-4 py-3 text-xs text-gray-500 space-y-0.5">
+            <p className="font-medium text-gray-400 mb-1">Demo credentials</p>
+            <p>alice@devcollab.dev · password123</p>
+            <p>bob@devcollab.dev · password123</p>
+          </div>
         </form>
       </div>
     </div>

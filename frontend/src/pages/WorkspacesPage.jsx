@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import AppShell from '../components/AppShell.jsx';
 import WorkspaceCard from '../components/WorkspaceCard.jsx';
 import CreateWorkspaceModal from '../components/CreateWorkspaceModal.jsx';
+import SkeletonCard from '../components/SkeletonCard.jsx';
 import { useWorkspace } from '../context/WorkspaceContext.jsx';
 
 export default function WorkspacesPage() {
@@ -31,10 +32,10 @@ export default function WorkspacesPage() {
           </button>
         </div>
 
-        {/* States */}
+        {/* Loading skeletons */}
         {loading && (
-          <div className="text-center py-20 text-gray-500 text-sm animate-pulse">
-            Loading workspaces…
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} />)}
           </div>
         )}
 
