@@ -19,7 +19,14 @@ function getClient() {
   return genAI;
 }
 
-const MODEL_NAME = 'gemini-1.5-flash-latest';
+/**
+ * Use "gemini-1.0-pro" — the stable model supported across all versions of
+ * the @google/generative-ai SDK without requiring v1beta API access.
+ * "gemini-1.5-flash" requires the v1beta endpoint on some SDK versions and
+ * can return "model not found" errors; gemini-1.0-pro resolves reliably on
+ * the stable v1 endpoint.
+ */
+const MODEL_NAME = 'gemini-1.0-pro';
 
 /**
  * Sends a prompt to Gemini and returns the text response.
@@ -28,10 +35,24 @@ const MODEL_NAME = 'gemini-1.5-flash-latest';
  * @returns {Promise<string>}
  */
 export async function generateText(prompt) {
-  const client = getClient();
-  const model  = client.getGenerativeModel({ model: MODEL_NAME });
-  const result = await model.generateContent(prompt);
-  return result.response.text();
+  try {
+    const client = getClient();
+    const model  = client.getGenerativeModel({ model: MODEL_NAME });
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+  } catch (err) {
+    // Surface a friendly message for common failure modes
+    if (err.message?.includes('GEMINI_API_KEY')) throw err;
+    if (err.status === 404 || err.message?.includes('404')) {
+      throw new Error(
+        `Gemini model "${MODEL_NAME}" not found. Verify your GEMINI_API_KEY has access to this model.`
+      );
+    }
+    if (err.status === 429 || err.message?.includes('quota')) {
+      throw new Error('Gemini API quota exceeded. Please try again later.');
+    }
+    throw new Error(`Gemini request failed: ${err.message ?? 'unknown error'}`);
+  }
 }
 
 /**
@@ -50,5 +71,9 @@ export async function generateJSON(prompt) {
     .replace(/\s*```\s*$/, '')
     .trim();
 
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    throw new Error('Gemini returned a response that could not be parsed as JSON.');
+  }
 }
